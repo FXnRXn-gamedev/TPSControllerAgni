@@ -1,3 +1,4 @@
+using System;
 using Unity.Cinemachine;
 using UnityEngine;
 
@@ -15,6 +16,9 @@ namespace Agni
 		[Header("Jump/Gravity Settings")]
 		[SerializeField] private float					jumpForce				= 7f;
 		[SerializeField] private float					gravity					= 9.81f;
+		[Range(0, 1)] public float						jumpReleaseMultiplier = 0.5f;
+		public float									coyoteTime = 0.15f;
+		public float									jumpBufferTime = 0.2f;
 
 		[Header("Collision Settings")] 
 		[SerializeField] private Transform				collisionOrigin;
@@ -24,13 +28,25 @@ namespace Agni
 		[SerializeField] private float					characterRadius			= 0.5f;
 		[SerializeField] private LayerMask				collisionLayers;
 		
+		// Jump system variables
+		private float coyoteTimeCounter;
+		private float jumpBufferCounter;
+		private bool isJumpHeld;
+		private bool hasJumped;
+		
 		
 		[Header("Cinemachine Settings")]
 		public CinemachineCamera virtualCamera;
+		[SerializeField] private float rotatioalSpeed = 10f;
+		public Vector2 cameraYClamp = new Vector2(-20, 80);
+
+		private float cinemachineTargetYaw;
+		private float cinemachineTargetPitch;
 		private Transform cameraTransform;
-
-
-
+		private float currentCameraX;
+		private float currentCameraY;
+		
+		
 		private Vector2				input;
 		private bool				isGrounded;
 		private Vector3				velocity;
@@ -46,19 +62,25 @@ namespace Agni
 			Cursor.lockState = CursorLockMode.Locked;
 		}
 
-		private void InitializeCinemachineCamera()
+		void InitializeCinemachineCamera()
 		{
+			virtualCamera = FindFirstObjectByType<CinemachineCamera>();
 			if (virtualCamera != null)
 			{
 				cameraTransform = virtualCamera.transform;
 			}
+			
 		}
+		
 
 		// Update is called once per frame
 		void Update()
 		{
 			HandleInput();
 			moveDirection = CalculateMovementDirection(input);
+			
+			isGrounded = CheckGrounded();
+			UpdateJumpVariables();
 			
 			Vector3 desiredVelocity = CalculateVelocity(moveDirection);
 			Vector3 finalVelocity = HandleCollisions(desiredVelocity);
@@ -67,14 +89,59 @@ namespace Agni
 			transform.position += velocity * Time.deltaTime;
 			
 		}
-		
-		
-		
-		
+
+		private void LateUpdate()
+		{
+			HandleCameraInput();
+		}
+
+
 		//--------------------------------------------------------------------------------------------------------------
 		private void HandleInput()
 		{
 			input = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
+			
+		}
+		
+		void UpdateJumpVariables()
+		{
+			// Update coyote time
+			if (isGrounded && velocity.y <= 0)
+			{
+				coyoteTimeCounter = coyoteTime;
+				hasJumped = false;
+			}
+			else
+			{
+				coyoteTimeCounter -= Time.deltaTime;
+			}
+
+			// Update jump buffer
+			if (Input.GetButtonDown("Jump"))
+			{
+				jumpBufferCounter = jumpBufferTime;
+			}
+			else
+			{
+				jumpBufferCounter -= Time.deltaTime;
+			}
+
+			// Track jump button state
+			isJumpHeld = Input.GetButton("Jump");
+		}
+
+		private void HandleCameraInput()
+		{
+			if (virtualCamera == null) return;
+			currentCameraX = Input.GetAxis("Mouse X") * rotatioalSpeed * Time.deltaTime;
+			currentCameraY = Input.GetAxis("Mouse Y") * rotatioalSpeed * Time.deltaTime;
+			
+			// cinemachineTargetPitch = Mathf.Clamp(currentCameraY, cameraYClamp.x, cameraYClamp.y);
+			// cinemachineTargetYaw = Mathf.Clamp(currentCameraX, float.MinValue, float.MaxValue);
+			Quaternion cameraRotation = Quaternion.Euler(currentCameraY, currentCameraX, 0);
+
+			cameraTransform.rotation = cameraRotation;
+			
 			
 		}
 		
@@ -104,21 +171,23 @@ namespace Agni
 			horizontalVelocity = Vector3.Lerp(horizontalVelocity, Vector3.zero, currentFriction * Time.deltaTime);
 
 			// Vertical movement
-			if (isGrounded)
+			if (coyoteTimeCounter > 0 && jumpBufferCounter > 0 && !hasJumped)
 			{
-				if (Input.GetButtonDown("Jump"))
-				{
-					newVelocity.y = jumpForce;
-					isGrounded = false;
-				}
-				else
-				{
-					newVelocity.y = Mathf.Max(newVelocity.y, 0);
-				}
+				newVelocity.y = jumpForce;
+				coyoteTimeCounter = 0;
+				jumpBufferCounter = 0;
+				hasJumped = true;
 			}
-			else
+
+			// Variable jump height
+			if (!isJumpHeld && newVelocity.y > 0)
 			{
-				newVelocity.y -= gravity * Time.deltaTime;
+				newVelocity.y *= jumpReleaseMultiplier;
+			}
+
+			if (!isGrounded)
+			{
+				newVelocity.y -= gravity * 1.5f * Time.deltaTime;
 			}
 
 			newVelocity.x = horizontalVelocity.x;
@@ -169,15 +238,21 @@ namespace Agni
 
 			return adjustedVelocity;
 		}
-		
-		
+
 		void OnDrawGizmos()
 		{
 			Gizmos.color = Color.red;
 			Gizmos.DrawWireSphere(collisionOrigin.position + Vector3.down * (characterHeight / 2 - characterRadius), characterRadius);
 		}
 		
-		
+		bool CheckGrounded()
+		{
+			return Physics.CheckSphere(
+				transform.position + Vector3.down * (characterHeight / 2 - characterRadius),
+				characterRadius,
+				collisionLayers
+			);
+		}
 		
 	} // NameSpace END
 }
