@@ -5723,7 +5723,7 @@ MonoBehaviour:
   acceleration: 10
   groundFriction: 3.5
   airFriction: 4
-  jumpForce: 4
+  jumpForce: 7
   gravity: 9.81
   jumpReleaseMultiplier: 1
   coyoteTime: 0.15
@@ -5737,7 +5737,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 64
   virtualCamera: {fileID: 788058135}
-  rotatioalSpeed: 100
+  rotatioalSpeed: 10
   cameraYClamp: {x: -20, y: 80}
 --- !u!4 &176022214 stripped
 Transform:
@@ -7255,6 +7255,10 @@ PrefabInstance:
     - target: {fileID: 1570628789228942, guid: baebdd3b26f756b4c8f1b2d2efe1cf42, type: 3}
       propertyPath: m_Name
       value: SM_Buildings_Block_1x1_01P (16)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1570628789228942, guid: baebdd3b26f756b4c8f1b2d2efe1cf42, type: 3}
+      propertyPath: m_Layer
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 4883762814713038, guid: baebdd3b26f756b4c8f1b2d2efe1cf42, type: 3}
       propertyPath: m_RootOrder
@@ -31801,6 +31805,10 @@ PrefabInstance:
     - target: {fileID: 1570628789228942, guid: baebdd3b26f756b4c8f1b2d2efe1cf42, type: 3}
       propertyPath: m_Name
       value: SM_Buildings_Block_1x1_01P (15)
+      objectReference: {fileID: 0}
+    - target: {fileID: 1570628789228942, guid: baebdd3b26f756b4c8f1b2d2efe1cf42, type: 3}
+      propertyPath: m_Layer
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 4883762814713038, guid: baebdd3b26f756b4c8f1b2d2efe1cf42, type: 3}
       propertyPath: m_RootOrder

@@ -139,10 +139,11 @@ namespace Agni
 			// cinemachineTargetPitch = Mathf.Clamp(currentCameraY, cameraYClamp.x, cameraYClamp.y);
 			// cinemachineTargetYaw = Mathf.Clamp(currentCameraX, float.MinValue, float.MaxValue);
 			Quaternion cameraRotation = Quaternion.Euler(currentCameraY, currentCameraX, 0);
+			Debug.Log(cameraRotation);
+			//cameraTransform.rotation = cameraRotation;
+			
 
-			cameraTransform.rotation = cameraRotation;
-			
-			
+
 		}
 		
 		Vector3 CalculateMovementDirection(Vector2 input)
